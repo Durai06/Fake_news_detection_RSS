@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Verification System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: block;
+            margin: 20px auto 0;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+
+        .status-card {
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status-likely-real {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-partially-verified {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .status-fake {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .status-text {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .keywords {
+            margin: 20px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .keyword-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .keyword-tag {
+            background: #e0e0e0;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .related-news {
+            margin-top: 20px;
+        }
+
+        .news-item {
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .news-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .news-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .news-source {
+            background: #e8e8e8;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+
+        .news-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .news-link:hover {
+            text-decoration: underline;
+        }
+
+        .similarity-badge {
+            background: #667eea;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Fake News Verification System</h1>
+        <p class="subtitle">Verify news against trusted Indian sources in real-time</p>
+
+        <div class="input-section">
+            <textarea 
+                id="newsInput" 
+                rows="5" 
+                placeholder="Enter news headline or content to verify..."
+            ></textarea>
+            <button id="verifyBtn" onclick="verifyNews()">Verify News</button>
+        </div>
+
+        <div id="resultSection" class="result-section" style="display: none;">
+            <!-- Results will be displayed here -->
+        </div>
+
+        <div class="footer">
+            <p>Sources: The Hindu, Indian Express, Times of India, NDTV</p>
+            <p>Real-time verification using RSS feeds • No ML/AI used</p>
+        </div>
+    </div>
+
+    <script>
+        async function verifyNews() {
+            const newsInput = document.getElementById('newsInput').value.trim();
+            const verifyBtn = document.getElementById('verifyBtn');
+            const resultSection = document.getElementById('resultSection');
+
+            if (newsInput.length < 10) {
+                alert('Please enter at least 10 characters of news text');
+                return;
+            }
+
+            // Show loading state
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = 'Verifying...';
+            
+            resultSection.style.display = 'block';
+            resultSection.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Fetching latest news and analyzing...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ news_text: newsInput })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    throw new Error(data.error || 'Failed to verify news');
+                }
+            } catch (error) {
+                resultSection.innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            } finally {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = 'Verify News';
+            }
+        }
+
+        function displayResults(data) {
+            const resultSection = document.getElementById('resultSection');
+            
+            // Determine status class
+            let statusClass = '';
+            if (data.status.includes('Likely Real')) {
+                statusClass = 'status-likely-real';
+            } else if (data.status.includes('Partially Verified')) {
+                statusClass = 'status-partially-verified';
+            } else {
+                statusClass = 'status-fake';
+            }
+
+            // Build related news HTML
+            const relatedNewsHtml = data.related_news.map(news => `
+                <div class="news-item">
+                    <div class="news-title">${news.title}</div>
+                    <div class="news-meta">
+                        <span class="news-source">${news.source}</span>
+                        <span class="similarity-badge">Match: ${Math.round(news.similarity * 100)}%</span>
+                        <a href="${news.link}" target="_blank" class="news-link">Read More →</a>
+                    </div>
+                </div>
+            `).join('');
+
+            // Build complete HTML
+            resultSection.innerHTML = `
+                <div class="status-card ${statusClass}">
+                    <div class="status-icon">${getStatusIcon(data.status)}</div>
+                    <div class="status-text">${data.status}</div>
+                    <p>Based on analysis of ${data.total_matches} matching articles</p>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value">${data.matching_sources}</div>
+                        <div class="stat-label">Matching Sources</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">${data.total_matches}</div>
+                        <div class="stat-label">Related Articles</div>
+                    </div>
+                </div>
+
+                <div class="keywords">
+                    <strong>Keywords Extracted:</strong>
+                    <div class="keyword-tags">
+                        ${data.keywords_used.map(k => `<span class="keyword-tag">${k}</span>`).join('')}
+                    </div>
+                </div>
+
+                <div class="related-news">
+                    <h3>📰 Related News Articles</h3>
+                    ${relatedNewsHtml || '<p>No closely matching articles found</p>'}
+                </div>
+            `;
+        }
+
+        function getStatusIcon(status) {
+            if (status.includes('Likely Real')) return '✅';
+            if (status.includes('Partially Verified')) return '⚠️';
+            return '❌';
+        }
+
+        // Allow Enter key to submit (with Shift+Enter for new line)
+        document.getElementById('newsInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                verifyNews();
+            }
+        });
+    </script>
+</body>
+</html>
